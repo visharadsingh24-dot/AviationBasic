@@ -1,0 +1,1769 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AEROLAB // Wind Tunnel Experiment Console</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Orbitron, Rajdhani, JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;800&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            space: '#050a14',
+            panel: '#0a1222',
+            panelLight: '#0f1b33',
+            borderSci: '#142847',
+            cyanGlow: '#00f3ff',
+            elecBlue: '#0088ff',
+            amberGlow: '#ffaa00',
+            crimsonAlert: '#ff2a55'
+          },
+          fontFamily: {
+            display: ['Orbitron', 'sans-serif'],
+            subdisplay: ['Rajdhani', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      scrollbar-width: thin;
+      scrollbar-color: #142847 #050a14;
+    }
+
+    body {
+      background-color: #050a14;
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', monospace;
+      overflow-x: hidden;
+    }
+
+    /* Custom Sci-Fi Range Sliders */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 5px;
+      background: #142847;
+      border-radius: 999px;
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #00f3ff;
+      box-shadow: 0 0 10px #00f3ff, 0 0 4px #ffffff;
+      cursor: pointer;
+      border: 2px solid #050a14;
+      transition: transform 0.12s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #00f3ff;
+      box-shadow: 0 0 10px #00f3ff;
+      cursor: pointer;
+      border: 2px solid #050a14;
+    }
+
+    /* Custom Sci-Fi Checkbox */
+    .sci-checkbox {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1px solid #1e3a66;
+      background: #050a14;
+      border-radius: 3px;
+      cursor: pointer;
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .sci-checkbox:checked {
+      background: #00f3ff;
+      border-color: #00f3ff;
+      box-shadow: 0 0 8px rgba(0, 243, 255, 0.6);
+    }
+
+    .sci-checkbox:checked::after {
+      content: '✓';
+      color: #050a14;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    /* Subtle Glow Effects */
+    .glow-cyan-text {
+      text-shadow: 0 0 12px rgba(0, 243, 255, 0.55);
+    }
+    .glow-amber-text {
+      text-shadow: 0 0 12px rgba(255, 170, 0, 0.5);
+    }
+    .glow-crimson-text {
+      text-shadow: 0 0 12px rgba(255, 42, 85, 0.7);
+    }
+
+    .panel-card {
+      background: linear-gradient(180deg, rgba(12, 22, 42, 0.92) 0%, rgba(8, 15, 29, 0.96) 100%);
+      border: 1px solid #142847;
+      box-shadow: inset 0 1px 0 rgba(0, 243, 255, 0.08);
+    }
+
+    @keyframes pulseFast {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+    .animate-stall {
+      animation: pulseFast 0.9s infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col lg:flex-row selection:bg-cyanGlow selection:text-space">
+
+  <!-- ===================================================================== -->
+  <!-- LEFT SIDEBAR: EXPERIMENT CONFIGURATION                                -->
+  <!-- ===================================================================== -->
+  <aside class="w-full lg:w-[295px] xl:w-[310px] shrink-0 bg-[#070d1a] border-b lg:border-b-0 lg:border-r border-borderSci flex flex-col lg:h-screen lg:sticky lg:top-0 overflow-y-auto">
+    
+    <!-- Brand Header -->
+    <div class="p-3.5 border-b border-borderSci flex items-center gap-3 bg-[#060b16]">
+      <div class="w-9 h-9 rounded-lg border border-cyanGlow/60 bg-cyanGlow/10 flex items-center justify-center shadow-[0_0_15px_rgba(0,243,255,0.2)] shrink-0">
+        <!-- Aerodynamic Wind Icon SVG -->
+        <svg class="w-5 h-5 text-cyanGlow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 8h13a3 3 0 1 0-2.83-4" stroke-linecap="round"/>
+          <path d="M3 12h16a3 3 0 1 1-2.83 4" stroke-linecap="round"/>
+          <path d="M3 16h9a2.5 2.5 0 1 1-2.36 3.3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="font-display font-bold text-sm tracking-wider text-white">
+          AERO<span class="text-cyanGlow glow-cyan-text">LAB</span>
+        </div>
+        <div class="text-[9px] tracking-[0.14em] text-slate-400 uppercase">
+          Wind Tunnel // Experiment Console
+        </div>
+      </div>
+    </div>
+
+    <!-- Config Body -->
+    <div class="p-3.5 space-y-4 flex-1">
+      
+      <!-- Section Header -->
+      <div class="flex items-center justify-between text-[10px] tracking-widest text-cyanGlow uppercase font-semibold">
+        <span class="flex items-center gap-2">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyanGlow"></span>
+          Experiment Config
+        </span>
+        <span id="customBadge" class="hidden px-2 py-0.5 text-[9px] rounded bg-amberGlow/20 border border-amberGlow text-amberGlow">
+          CUSTOM SKETCH
+        </span>
+      </div>
+
+      <!-- Mode Toggle: SIMULATED vs MANUAL -->
+      <div class="grid grid-cols-2 gap-1.5 p-1 bg-space border border-borderSci rounded-md">
+        <button id="btnModeSim" onclick="setMode('SIMULATED')" class="py-1 text-[11px] font-semibold tracking-wider rounded transition-all bg-cyanGlow/15 text-cyanGlow border border-cyanGlow/50 shadow-[0_0_10px_rgba(0,243,255,0.15)]">
+          SIMULATED
+        </button>
+        <button id="btnModeMan" onclick="setMode('MANUAL')" class="py-1 text-[11px] font-semibold tracking-wider rounded transition-all text-slate-400 hover:text-white border border-transparent">
+          MANUAL
+        </button>
+      </div>
+
+      <!-- Airfoil Presets -->
+      <div class="space-y-1.5">
+        <label class="block text-[10px] tracking-widest text-slate-400 uppercase">Airfoil Preset</label>
+        <div class="grid grid-cols-2 gap-1.5">
+          <button id="preset-symmetrical" onclick="selectPreset('symmetrical')" class="preset-btn text-left px-2.5 py-1.5 rounded border border-borderSci bg-panel hover:border-cyanGlow/50 text-[11px] text-slate-300 transition-all">
+            <div class="font-medium truncate">Symmetrical</div>
+            <div class="text-[9px] text-slate-500">NACA 0012</div>
+          </button>
+          <button id="preset-cambered" onclick="selectPreset('cambered')" class="preset-btn text-left px-2.5 py-1.5 rounded border border-cyanGlow bg-cyanGlow/10 text-[11px] text-cyanGlow font-medium transition-all shadow-[0_0_12px_rgba(0,243,255,0.12)]">
+            <div class="font-medium truncate">High-Lift</div>
+            <div class="text-[9px] text-cyanGlow/80">NACA 4412</div>
+          </button>
+          <button id="preset-supercritical" onclick="selectPreset('supercritical')" class="preset-btn text-left px-2.5 py-1.5 rounded border border-borderSci bg-panel hover:border-cyanGlow/50 text-[11px] text-slate-300 transition-all">
+            <div class="font-medium truncate">Supercritical</div>
+            <div class="text-[9px] text-slate-500">SC(2)-0714</div>
+          </button>
+          <button id="preset-wedge" onclick="selectPreset('wedge')" class="preset-btn text-left px-2.5 py-1.5 rounded border border-borderSci bg-panel hover:border-cyanGlow/50 text-[11px] text-slate-300 transition-all">
+            <div class="font-medium truncate">Supersonic</div>
+            <div class="text-[9px] text-slate-500">WEDGE DELTA</div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Freeform Wing Board (Interactive Sketchpad) -->
+      <div class="p-2.5 rounded-lg border border-borderSci bg-[#060c18] space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] tracking-widest text-cyanGlow uppercase font-semibold">Freeform Wing Board</span>
+          <button onclick="clearSketchpad()" title="Clear & Reset to Preset" class="px-2 py-0.5 text-[9px] rounded border border-borderSci bg-panel hover:border-amberGlow hover:text-amberGlow text-slate-300 transition-colors flex items-center gap-1">
+            <span>↺</span> CLEAR
+          </button>
+        </div>
+        <div class="relative rounded overflow-hidden border border-borderSci/80 bg-[#040811]">
+          <canvas id="sketchCanvas" class="w-full h-[96px] block cursor-crosshair touch-none"></canvas>
+          <div id="sketchHint" class="pointer-events-none absolute inset-0 flex items-center justify-center text-[9px] text-slate-500 tracking-wider uppercase text-center px-3">
+            Draw any wing profile — morphs live in tunnel
+          </div>
+        </div>
+      </div>
+
+      <!-- Sliders Group -->
+      <div class="space-y-3.5 pt-0.5">
+        <!-- Angle of Attack -->
+        <div class="space-y-1">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-[10px] tracking-widest text-slate-300 uppercase">Angle of Attack</span>
+            <span id="valAoA" class="font-bold text-amberGlow">8.0°</span>
+          </div>
+          <input id="sliderAoA" type="range" min="-15" max="30" step="0.5" value="8" />
+          <div class="flex justify-between text-[9px] text-slate-500">
+            <span>-15°</span>
+            <span>0°</span>
+            <span>+16° STALL</span>
+            <span>30°</span>
+          </div>
+        </div>
+
+        <!-- Fan Speed -->
+        <div class="space-y-1">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-[10px] tracking-widest text-slate-300 uppercase">Fan Speed</span>
+            <span id="valFan" class="font-bold text-amberGlow">50%</span>
+          </div>
+          <input id="sliderFan" type="range" min="0" max="100" step="1" value="50" />
+          <div class="flex justify-between text-[9px] text-slate-500">
+            <span>0%</span>
+            <span>42.5 m/s</span>
+            <span>100%</span>
+          </div>
+        </div>
+
+        <!-- Camber Slider -->
+        <div id="camberControlWrap" class="space-y-1 transition-opacity">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-[10px] tracking-widest text-slate-300 uppercase">Camber (Curvature)</span>
+            <span id="valCamber" class="font-bold text-amberGlow">5.0%</span>
+          </div>
+          <input id="sliderCamber" type="range" min="-4" max="12" step="0.5" value="5" />
+          <div class="flex justify-between text-[9px] text-slate-500">
+            <span>-4%</span>
+            <span>0% SYM</span>
+            <span>+12%</span>
+          </div>
+        </div>
+
+        <!-- Thickness Slider -->
+        <div id="thicknessControlWrap" class="space-y-1 transition-opacity">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-[10px] tracking-widest text-slate-300 uppercase">Wing Thickness</span>
+            <span id="valThickness" class="font-bold text-amberGlow">12%</span>
+          </div>
+          <input id="sliderThickness" type="range" min="4" max="24" step="0.5" value="12" />
+          <div class="flex justify-between text-[9px] text-slate-500">
+            <span>4% THIN</span>
+            <span>14%</span>
+            <span>24% THICK</span>
+          </div>
+        </div>
+
+        <!-- Wing Area Slider + Synced Numeric Input -->
+        <div class="space-y-1">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-[10px] tracking-widest text-slate-300 uppercase">Wing Area (Scale)</span>
+            <span id="valAreaLabel" class="font-bold text-cyanGlow">0.18 m²</span>
+          </div>
+          <input id="sliderArea" type="range" min="0.05" max="0.60" step="0.01" value="0.18" />
+          <div class="flex justify-between text-[9px] text-slate-500">
+            <span>0.05 m²</span>
+            <span>0.30 m²</span>
+            <span>0.60 m²</span>
+          </div>
+        </div>
+
+        <!-- Manual Override Cl/Cd Box (Visible only in MANUAL mode) -->
+        <div id="manualOverrideBox" class="hidden p-2.5 rounded-lg border border-amberGlow/40 bg-amberGlow/5 space-y-2">
+          <div class="text-[10px] tracking-widest text-amberGlow uppercase font-semibold">Manual Coefficient Override</div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[9px] text-slate-400 mb-1">LIFT COEFF (Cl)</label>
+              <input id="inputManualCl" type="number" step="0.05" value="1.25" class="w-full px-2 py-1 rounded bg-space border border-borderSci text-xs text-amberGlow focus:border-amberGlow outline-none" />
+            </div>
+            <div>
+              <label class="block text-[9px] text-slate-400 mb-1">DRAG COEFF (Cd)</label>
+              <input id="inputManualCd" type="number" step="0.005" value="0.068" class="w-full px-2 py-1 rounded bg-space border border-borderSci text-xs text-cyanGlow focus:border-cyanGlow outline-none" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Air Density & Exact Wing Area Numeric Inputs -->
+      <div class="grid grid-cols-2 gap-2 pt-0.5">
+        <div>
+          <label class="block text-[9px] tracking-wider text-slate-400 uppercase mb-1">Air Density</label>
+          <input id="inputDensity" type="number" step="0.005" min="0.1" max="5" value="1.225" class="w-full px-2 py-1 rounded bg-panel border border-borderSci text-xs text-white focus:border-cyanGlow outline-none" />
+          <span class="block text-[9px] text-slate-500 mt-0.5">kg/m³</span>
+        </div>
+        <div>
+          <label class="block text-[9px] tracking-wider text-slate-400 uppercase mb-1">Exact Area</label>
+          <input id="inputArea" type="number" step="0.01" min="0.05" max="0.60" value="0.18" class="w-full px-2 py-1 rounded bg-panel border border-borderSci text-xs text-white focus:border-cyanGlow outline-none" />
+          <span class="block text-[9px] text-slate-500 mt-0.5">m² (0.05–0.60)</span>
+        </div>
+      </div>
+
+      <!-- Visual Layers / Arrow Flow Toggles -->
+      <div class="pt-2 border-t border-borderSci space-y-2">
+        <div class="text-[10px] tracking-widest text-cyanGlow uppercase font-semibold">
+          Visual Layers / Arrow Flow
+        </div>
+        <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer hover:text-white">
+          <span class="flex items-center gap-2">
+            <input id="chkStreamlines" type="checkbox" checked class="sci-checkbox" />
+            <span>Arrow streamlines</span>
+          </span>
+          <span class="w-2 h-2 rounded-full bg-cyanGlow shadow-[0_0_6px_#00f3ff]"></span>
+        </label>
+        <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer hover:text-white">
+          <span class="flex items-center gap-2">
+            <input id="chkHeatmap" type="checkbox" checked class="sci-checkbox" />
+            <span>Pressure heatmap</span>
+          </span>
+          <span class="w-2 h-2 rounded-full bg-elecBlue shadow-[0_0_6px_#0088ff]"></span>
+        </label>
+        <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer hover:text-white">
+          <span class="flex items-center gap-2">
+            <input id="chkVectors" type="checkbox" checked class="sci-checkbox" />
+            <span>Force vectors</span>
+          </span>
+          <span class="w-2 h-2 rounded-full bg-amberGlow shadow-[0_0_6px_#ffaa00]"></span>
+        </label>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===================================================================== -->
+  <!-- RIGHT MAIN CONTENT AREA                                               -->
+  <!-- ===================================================================== -->
+  <main class="flex-1 flex flex-col p-3.5 md:p-5 gap-3.5 max-w-full overflow-x-hidden">
+    
+    <!-- Top Status & Header Bar -->
+    <header class="flex flex-col md:flex-row md:items-center justify-between gap-2.5 border-b border-borderSci pb-3">
+      <div>
+        <div class="flex items-center gap-2 text-[10px] tracking-widest text-cyanGlow font-semibold mb-0.5">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          <span>LIVE FLOW FIELD / <span id="fpsCounter">60</span> FPS // MORPH-COUPLED SOLVER</span>
+        </div>
+        <h1 class="font-display text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-wider text-white">
+          WIND TUNNEL <span class="text-cyanGlow glow-cyan-text">SIMULATOR</span>
+        </h1>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5 sm:gap-3">
+        <!-- System Online Badge -->
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded bg-panel border border-borderSci text-[11px] tracking-wider">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
+          <span class="text-slate-300">SYSTEM ONLINE</span>
+          <span class="text-slate-600">|</span>
+          <span class="text-slate-400">RUN ID <strong class="text-cyanGlow">WT-8428</strong></span>
+        </div>
+
+        <!-- Pause / Resume Simulation Button -->
+        <button id="btnPause" onclick="togglePause()" class="px-3.5 py-1.5 rounded border border-cyanGlow/70 bg-cyanGlow/10 hover:bg-cyanGlow/20 text-cyanGlow text-xs font-semibold tracking-widest uppercase transition-all shadow-[0_0_15px_rgba(0,243,255,0.15)] flex items-center gap-2">
+          <span id="pauseIcon">❚❚</span>
+          <span id="pauseText">PAUSE SIMULATION</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Center Wind Tunnel Canvas Viewport (Expansive Centerpiece) -->
+    <section class="relative w-full h-[430px] sm:h-[490px] lg:h-[540px] xl:h-[580px] rounded-lg border border-borderSci bg-[#040914] overflow-hidden shadow-[0_0_35px_rgba(0,0,0,0.65)]">
+      <canvas id="tunnelCanvas" class="w-full h-full block"></canvas>
+
+      <!-- Top-Left HUD Overlay -->
+      <div class="pointer-events-none absolute top-3.5 left-4">
+        <div class="text-[10px] tracking-widest text-slate-400 uppercase">Flow Velocity</div>
+        <div id="hudVelocity" class="text-xl sm:text-2xl font-bold text-cyanGlow glow-cyan-text">42.5 m/s</div>
+        <div class="flex flex-wrap items-center gap-3 mt-1 text-[10px]">
+          <span class="flex items-center gap-1.5 text-elecBlue">
+            <span class="w-2 h-2 rounded-full bg-elecBlue shadow-[0_0_6px_#0088ff]"></span> LAMINAR STREAM
+          </span>
+          <span class="flex items-center gap-1.5 text-cyanGlow">
+            <span class="w-2 h-2 rounded-full bg-cyanGlow shadow-[0_0_6px_#00f3ff]"></span> SUCTION ACCEL
+          </span>
+          <span class="flex items-center gap-1.5 text-crimsonAlert">
+            <span class="w-2 h-2 rounded-full bg-crimsonAlert shadow-[0_0_6px_#ff2a55]"></span> WING IMPACT / BLOCKED
+          </span>
+        </div>
+      </div>
+
+      <!-- Top-Right Geometry Telemetry Badge -->
+      <div class="pointer-events-none absolute top-3.5 right-4 text-right hidden sm:block">
+        <div class="text-[10px] tracking-widest text-slate-400 uppercase">Active Geometry</div>
+        <div id="hudGeomSummary" class="text-xs font-semibold text-slate-200 mt-0.5">
+          CAM 5.0% · THK 12% · AREA 0.18m²
+        </div>
+        <div id="hudCritStall" class="text-[10px] text-amberGlow mt-0.5">
+          CRIT STALL: 16.5°
+        </div>
+      </div>
+
+      <!-- Top-Center Stall Warning Banner -->
+      <div id="stallBanner" class="hidden pointer-events-none absolute top-3.5 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded border border-crimsonAlert bg-crimsonAlert/20 backdrop-blur-sm text-crimsonAlert text-xs font-bold tracking-widest uppercase glow-crimson-text animate-stall">
+        ⚠ STALL WARNING // FLOW SEPARATION
+      </div>
+
+      <!-- Bottom-Left Chord & Reynolds Scale Reference -->
+      <div class="pointer-events-none absolute bottom-3 left-4 text-[10px] text-slate-400 tracking-wider">
+        CHORD SCALE: <span id="hudChordScale" class="text-cyanGlow font-semibold">1.00x</span> · BOUNDARY COUPLING ACTIVE
+      </div>
+
+      <!-- Bottom-Right AoA HUD Overlay -->
+      <div class="pointer-events-none absolute bottom-3 right-4 text-right">
+        <div class="text-[10px] tracking-widest text-slate-400 uppercase">AOA</div>
+        <div id="hudAoA" class="text-xl sm:text-2xl font-bold text-cyanGlow glow-cyan-text">8.0°</div>
+      </div>
+    </section>
+
+    <!-- Telemetry Cards Row (4 Cards) -->
+    <section class="grid grid-cols-2 xl:grid-cols-4 gap-3">
+      <!-- Card 1: Lift Force -->
+      <div class="panel-card rounded-lg p-3.5 border-l-2 border-l-amberGlow flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] tracking-widest text-slate-400 uppercase">Lift Force</span>
+          <span class="w-4 h-0.5 bg-amberGlow/50"></span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1.5">
+          <span id="cardLift" class="text-2xl sm:text-3xl font-bold text-amberGlow glow-amber-text">246.0</span>
+          <span class="text-xs text-slate-400">N</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Drag Force -->
+      <div class="panel-card rounded-lg p-3.5 border-l-2 border-l-cyanGlow flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] tracking-widest text-slate-400 uppercase">Drag Force</span>
+          <span class="w-4 h-0.5 bg-cyanGlow/50"></span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1.5">
+          <span id="cardDrag" class="text-2xl sm:text-3xl font-bold text-cyanGlow glow-cyan-text">13.4</span>
+          <span class="text-xs text-slate-400">N</span>
+        </div>
+      </div>
+
+      <!-- Card 3: L / D Ratio -->
+      <div class="panel-card rounded-lg p-3.5 border-l-2 border-l-slate-300 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] tracking-widest text-slate-400 uppercase">L / D Ratio</span>
+          <span class="w-4 h-0.5 bg-slate-500"></span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1.5">
+          <span id="cardLD" class="text-2xl sm:text-3xl font-bold text-white">18.4</span>
+        </div>
+      </div>
+
+      <!-- Card 4: Dynamic Pressure -->
+      <div class="panel-card rounded-lg p-3.5 border-l-2 border-l-elecBlue flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] tracking-widest text-slate-400 uppercase">Dynamic Pressure</span>
+          <span class="w-4 h-0.5 bg-elecBlue/60"></span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-1.5">
+          <span id="cardPressure" class="text-2xl sm:text-3xl font-bold text-cyanGlow">1106</span>
+          <span class="text-xs text-slate-400">Pa</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bottom Row: Lift/Angle History Chart + Experiment Log -->
+    <section class="grid grid-cols-1 xl:grid-cols-12 gap-3.5">
+      
+      <!-- Lift / Angle History Chart (7 cols) -->
+      <div class="xl:col-span-7 panel-card rounded-lg p-3.5 flex flex-col justify-between min-h-[190px]">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-[11px] tracking-widest text-slate-300 uppercase font-semibold">Lift / Angle History (Cl vs AoA)</span>
+          <span class="text-xs font-bold text-cyanGlow">CL <span id="chartClReadout">1.265</span></span>
+        </div>
+        <div class="relative flex-1 w-full min-h-[140px]">
+          <canvas id="historyCanvas" class="w-full h-full block"></canvas>
+        </div>
+      </div>
+
+      <!-- Experiment Log & CSV Export (5 cols) -->
+      <div class="xl:col-span-5 panel-card rounded-lg p-3.5 flex flex-col justify-between min-h-[190px]">
+        <div>
+          <div class="flex items-center justify-between mb-2.5">
+            <span class="flex items-center gap-2 text-[11px] tracking-widest text-slate-300 uppercase font-semibold">
+              <svg class="w-3.5 h-3.5 text-cyanGlow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              Experiment Log
+            </span>
+            <div class="flex items-center gap-2">
+              <span id="runCountLabel" class="text-[10px] text-slate-400">01 RUNS</span>
+              <button onclick="exportCSV()" class="px-2 py-0.5 rounded border border-cyanGlow/50 bg-cyanGlow/10 hover:bg-cyanGlow/20 text-[10px] text-cyanGlow tracking-wider uppercase transition-colors">
+                CSV EXPORT
+              </button>
+            </div>
+          </div>
+
+          <!-- Save Run Controls -->
+          <div class="flex gap-2 mb-2.5">
+            <input id="runNameInput" type="text" value="Test run" placeholder="Run label..." class="flex-1 px-3 py-1.5 rounded bg-space border border-borderSci text-xs text-white focus:border-amberGlow outline-none" />
+            <button onclick="saveExperimentRun()" class="px-3.5 py-1.5 rounded border border-amberGlow bg-amberGlow/15 hover:bg-amberGlow/25 text-amberGlow text-xs font-bold tracking-wider uppercase transition-all shrink-0 flex items-center gap-1.5">
+              <span>💾</span> SAVE RUN
+            </button>
+          </div>
+        </div>
+
+        <!-- Saved Runs List -->
+        <div id="runsList" class="space-y-1.5 max-h-[105px] overflow-y-auto pr-1">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Toast Notification -->
+  <div id="toastMsg" class="pointer-events-none fixed bottom-5 right-5 px-4 py-2.5 rounded border border-cyanGlow bg-panel/95 text-cyanGlow text-xs tracking-wider shadow-[0_0_20px_rgba(0,243,255,0.25)] opacity-0 translate-y-2 transition-all duration-200 z-50">
+    Run logged to experiment telemetry.
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- APPLICATION JAVASCRIPT & MORPH-COUPLED AERODYNAMIC ENGINE             -->
+  <!-- ===================================================================== -->
+  <script>
+    // --- STATE MANAGEMENT ---
+    const state = {
+      mode: 'SIMULATED',         // 'SIMULATED' or 'MANUAL'
+      preset: 'cambered',        // 'symmetrical', 'cambered', 'supercritical', 'wedge', 'custom'
+      aoa: 8.0,                  // Angle of attack in degrees (-15 to 30)
+      fanSpeed: 50,              // Fan speed % (0 to 100)
+      camber: 5.0,               // % (-4 to 12)
+      thickness: 12.0,           // % (4 to 24)
+      airDensity: 1.225,         // kg/m^3
+      wingArea: 0.18,            // m^2 (0.05 to 0.60)
+      manualCl: 1.25,
+      manualCd: 0.068,
+      showStreamlines: true,
+      showHeatmap: true,
+      showVectors: true,
+      paused: false,
+      customPolygonNorm: null,   // Normalized array of {x, y}
+      savedRuns: [
+        {
+          name: 'TEST_UI_RUN',
+          profile: 'Symmetrical',
+          aoa: 20.0,
+          velocity: 42.5,
+          lift: 192.5,
+          drag: 48.2,
+          ld: 3.99
+        }
+      ]
+    };
+
+    // Smoothly interpolated visual morph parameters (for ultra-fluid 60fps transitions)
+    const smoothMorph = {
+      aoa: 8.0,
+      camber: 5.0,
+      thickness: 12.0,
+      wingArea: 0.18
+    };
+
+    // Computed telemetry
+    let telemetry = {
+      velocity: 42.5,
+      cl: 1.265,
+      cd: 0.068,
+      lift: 246.0,
+      drag: 13.4,
+      ld: 18.4,
+      dynamicPressure: 1106,
+      critStallAngle: 16.5,
+      isStalled: false
+    };
+
+    // --- DOM ELEMENTS ---
+    const tunnelCanvas = document.getElementById('tunnelCanvas');
+    const tunnelCtx = tunnelCanvas.getContext('2d');
+    const sketchCanvas = document.getElementById('sketchCanvas');
+    const sketchCtx = sketchCanvas.getContext('2d');
+    const historyCanvas = document.getElementById('historyCanvas');
+    const historyCtx = historyCanvas.getContext('2d');
+
+    // --- RESIZE HANDLING ---
+    function resizeCanvases() {
+      const dpr = window.devicePixelRatio || 1;
+
+      const tRect = tunnelCanvas.parentElement.getBoundingClientRect();
+      tunnelCanvas.width = tRect.width * dpr;
+      tunnelCanvas.height = tRect.height * dpr;
+      tunnelCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const sRect = sketchCanvas.getBoundingClientRect();
+      sketchCanvas.width = sRect.width * dpr;
+      sketchCanvas.height = sRect.height * dpr;
+      sketchCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawSketchpad();
+
+      const hRect = historyCanvas.parentElement.getBoundingClientRect();
+      historyCanvas.width = hRect.width * dpr;
+      historyCanvas.height = hRect.height * dpr;
+      historyCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawHistoryChart();
+    }
+
+    window.addEventListener('resize', resizeCanvases);
+
+    // --- MORPHING AIRFOIL GEOMETRY GENERATOR ---
+    // Generates normalized points {x, y} around (0,0) with chord length 1.0 (-0.38 to +0.62)
+    function getNormalizedAirfoilPoints(camberPct, thicknessPct) {
+      if (state.preset === 'custom' && state.customPolygonNorm && state.customPolygonNorm.length > 3) {
+        // Apply live camber bending & thickness scaling even on custom sketched shapes!
+        const camberOffset = (camberPct - 5.0) * 0.008;
+        const thickScale = thicknessPct / 12.0;
+        return state.customPolygonNorm.map(pt => {
+          const normX = pt.x + 0.38; // 0 at leading edge, 1 at trailing edge
+          const arch = Math.sin(Math.max(0, Math.min(1, normX)) * Math.PI) * camberOffset;
+          return {
+            x: pt.x,
+            y: pt.y * thickScale - arch
+          };
+        });
+      }
+
+      if (state.preset === 'wedge') {
+        const halfT = (thicknessPct / 100) * 0.68;
+        const tailCamber = -(camberPct / 100) * 0.65;
+        return [
+          { x: -0.45, y: 0 },
+          { x: 0.15, y: -halfT * 0.6 + tailCamber * 0.4 },
+          { x: 0.55, y: -halfT + tailCamber },
+          { x: 0.55, y: halfT + tailCamber },
+          { x: 0.15, y: halfT * 0.6 + tailCamber * 0.4 }
+        ];
+      }
+
+      // NACA 4-Digit & Supercritical Cambered Profiles
+      // Uses live camberPct directly so slider always morphs geometry smoothly!
+      const m = camberPct / 100;
+      const p = state.preset === 'supercritical' ? 0.55 : 0.40;
+      const t = thicknessPct / 100;
+      const steps = 42;
+      const upper = [];
+      const lower = [];
+
+      for (let i = 0; i <= steps; i++) {
+        const beta = (i / steps) * Math.PI;
+        const xc = 0.5 * (1 - Math.cos(beta));
+
+        // Thickness distribution
+        let yt = 5 * t * (
+          0.2969 * Math.sqrt(xc) -
+          0.1260 * xc -
+          0.3516 * xc * xc +
+          0.2843 * Math.pow(xc, 3) -
+          0.1015 * Math.pow(xc, 4)
+        );
+
+        // Supercritical airfoil features a flatter upper deck & aft reflex camber
+        if (state.preset === 'supercritical' && xc > 0.25 && xc < 0.85) {
+          yt *= 1.08;
+        }
+
+        // Mean camber line
+        let yc = 0;
+        let dyc_dx = 0;
+        if (Math.abs(m) > 0.0001 && xc > 0 && xc < 1) {
+          if (xc < p) {
+            yc = (m / (p * p)) * (2 * p * xc - xc * xc);
+            dyc_dx = ((2 * m) / (p * p)) * (p - xc);
+          } else {
+            yc = (m / Math.pow(1 - p, 2)) * ((1 - 2 * p) + 2 * p * xc - xc * xc);
+            dyc_dx = ((2 * m) / Math.pow(1 - p, 2)) * (p - xc);
+          }
+          if (state.preset === 'supercritical' && xc > 0.72) {
+            yc += m * 0.25 * Math.sin(((xc - 0.72) / 0.28) * Math.PI);
+          }
+        }
+
+        const theta = Math.atan(dyc_dx);
+        const xu = xc - yt * Math.sin(theta) - 0.38;
+        const yu = -(yc + yt * Math.cos(theta));
+        const xl = xc + yt * Math.sin(theta) - 0.38;
+        const yl = -(yc - yt * Math.cos(theta));
+
+        upper.push({ x: xu, y: yu });
+        lower.push({ x: xl, y: yl });
+      }
+
+      return [...upper, ...lower.reverse()];
+    }
+
+    // Compute dynamic visual chord in pixels from Wing Area (0.05 m² to 0.60 m²)
+    function getVisualChordPx(tunnelWidth, areaVal) {
+      const baseChord = Math.min(280, Math.max(190, tunnelWidth * 0.24));
+      // Area scales geometrically as sqrt(Area / ReferenceArea) so 0.05m² is compact & 0.60m² is huge
+      const areaScale = 0.65 + 0.75 * Math.sqrt((areaVal - 0.04) / 0.56);
+      return {
+        chordPx: baseChord * areaScale,
+        scaleRatio: areaScale
+      };
+    }
+
+    // Transform normalized airfoil to screen coordinates rotated by AoA
+    function getScreenAirfoilPolygon(cx, cy, chordPx, aoaDeg, camberPct, thicknessPct) {
+      const norm = getNormalizedAirfoilPoints(camberPct, thicknessPct);
+      const rad = (-aoaDeg * Math.PI) / 180;
+      const cosA = Math.cos(rad);
+      const sinA = Math.sin(rad);
+
+      return norm.map(pt => {
+        const sx = pt.x * chordPx;
+        const sy = pt.y * chordPx;
+        return {
+          x: cx + sx * cosA - sy * sinA,
+          y: cy + sx * sinA + sy * cosA
+        };
+      });
+    }
+
+    // Point-in-polygon ray casting test
+    function isPointInsidePolygon(px, py, poly) {
+      let inside = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const xi = poly[i].x, yi = poly[i].y;
+        const xj = poly[j].x, yj = poly[j].y;
+        const intersect = ((yi > py) !== (yj > py)) &&
+          (px < ((xj - xi) * (py - yi)) / (yj - yi + 1e-9) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    // --- AERODYNAMIC PHYSICS ENGINE ---
+    function getCriticalStallAngle() {
+      // Thicker and moderately cambered wings delay flow separation slightly
+      const thicknessBonus = (state.thickness - 12.0) * 0.18;
+      const camberShift = Math.max(-2.0, Math.min(2.0, state.camber * 0.15));
+      return Math.max(12.5, Math.min(20.5, 16.0 + thicknessBonus + camberShift));
+    }
+
+    function computeAerodynamicsForAoA(aoaDeg) {
+      if (state.mode === 'MANUAL') {
+        return { cl: state.manualCl, cd: state.manualCd };
+      }
+
+      let effectiveCamber = state.camber;
+      let thicknessFactor = state.thickness / 12.0;
+      let shapeDragPenalty = 0;
+
+      if (state.preset === 'wedge') {
+        shapeDragPenalty = 0.042;
+      } else if (state.preset === 'supercritical') {
+        shapeDragPenalty = -0.003;
+      } else if (state.preset === 'custom' && state.customPolygonNorm) {
+        let minY = Infinity, maxY = -Infinity, sumY = 0;
+        state.customPolygonNorm.forEach(p => {
+          if (p.y < minY) minY = p.y;
+          if (p.y > maxY) maxY = p.y;
+          sumY += p.y;
+        });
+        const avgY = sumY / state.customPolygonNorm.length;
+        effectiveCamber = state.camber + Math.max(-4, Math.min(8, -avgY * 35));
+        thicknessFactor = (state.thickness / 12.0) * Math.max(0.6, Math.min(2.2, (maxY - minY) / 0.14));
+        shapeDragPenalty = 0.022 * thicknessFactor;
+      }
+
+      const zeroLiftAoA = -effectiveCamber * 0.48;
+      const stallAngle = getCriticalStallAngle();
+      let cl = 0;
+
+      if (aoaDeg <= stallAngle) {
+        cl = 0.106 * (aoaDeg - zeroLiftAoA);
+      } else {
+        const peakCl = 0.106 * (stallAngle - zeroLiftAoA);
+        cl = Math.max(0.22, peakCl - 0.125 * (aoaDeg - stallAngle));
+      }
+
+      const cd0 = 0.013 * thicknessFactor + shapeDragPenalty;
+      const inducedDrag = (cl * cl) / (Math.PI * 6.4 * 0.86);
+      const stallDrag = aoaDeg > stallAngle ? 0.042 * Math.pow(aoaDeg - stallAngle, 1.35) : 0;
+      const cd = Math.max(0.011, cd0 + inducedDrag + stallDrag);
+
+      return { cl, cd };
+    }
+
+    function updateTelemetry() {
+      const vel = (state.fanSpeed / 100) * 85.0;
+      const q = 0.5 * state.airDensity * vel * vel;
+      const { cl, cd } = computeAerodynamicsForAoA(state.aoa);
+      const critStall = getCriticalStallAngle();
+
+      const lift = q * state.wingArea * cl;
+      const drag = q * state.wingArea * cd;
+      const ld = drag > 0.0001 ? lift / drag : 0;
+      const isStalled = state.mode === 'SIMULATED' && state.aoa > critStall && vel > 2.0;
+
+      telemetry = {
+        velocity: vel,
+        cl,
+        cd,
+        lift,
+        drag,
+        ld,
+        dynamicPressure: q,
+        critStallAngle: critStall,
+        isStalled
+      };
+
+      // Update DOM Readouts
+      document.getElementById('valAoA').textContent = `${state.aoa.toFixed(1)}°`;
+      document.getElementById('valFan').textContent = `${state.fanSpeed}%`;
+      document.getElementById('valCamber').textContent = `${state.camber.toFixed(1)}%`;
+      document.getElementById('valThickness').textContent = `${state.thickness.toFixed(1)}%`;
+      document.getElementById('valAreaLabel').textContent = `${state.wingArea.toFixed(2)} m²`;
+
+      document.getElementById('hudVelocity').textContent = `${vel.toFixed(1)} m/s`;
+      document.getElementById('hudAoA').textContent = `${state.aoa.toFixed(1)}°`;
+      document.getElementById('hudGeomSummary').textContent =
+        `CAM ${state.camber.toFixed(1)}% · THK ${state.thickness.toFixed(0)}% · AREA ${state.wingArea.toFixed(2)}m²`;
+      document.getElementById('hudCritStall').textContent = `CRIT STALL: ${critStall.toFixed(1)}°`;
+
+      document.getElementById('cardLift').textContent = lift.toFixed(1);
+      document.getElementById('cardDrag').textContent = drag.toFixed(1);
+      document.getElementById('cardLD').textContent = ld.toFixed(1);
+      document.getElementById('cardPressure').textContent = Math.round(q);
+      document.getElementById('chartClReadout').textContent = cl.toFixed(3);
+
+      const stallBanner = document.getElementById('stallBanner');
+      if (isStalled) {
+        stallBanner.classList.remove('hidden');
+      } else {
+        stallBanner.classList.add('hidden');
+      }
+
+      drawHistoryChart();
+    }
+
+    // --- MORPH-COUPLED STREAMLINE & ARROW FLOW SYSTEM ---
+    const NUM_LANES = 15;
+    const ARROWS_PER_LANE = 7;
+    let flowOffset = 0;
+
+    // Turbulent vortex eddies behind trailing edge during stall
+    const vortices = Array.from({ length: 44 }, () => ({
+      x: Math.random() * 280,
+      y: (Math.random() - 0.5) * 95,
+      angle: Math.random() * Math.PI * 2,
+      radius: 7 + Math.random() * 15,
+      speed: 0.08 + Math.random() * 0.1
+    }));
+
+    // Computes streamline Y coupled directly to live morphed chordPx, camber, thickness, and AoA
+    function getStreamlineY(x, y0, cx, cy, chordPx, aoaDeg, camberPct, thicknessPct) {
+      const dx = x - cx;
+      const dy0 = y0 - cy;
+      const sigmaX = chordPx * 0.72;
+      const sigmaY = chordPx * 0.52;
+
+      const envX = Math.exp(-(dx * dx) / (2 * sigmaX * sigmaX));
+      const envY = Math.exp(-(dy0 * dy0) / (2 * sigmaY * sigmaY));
+      const envelope = envX * envY;
+
+      // 1. Thickness displacement: thicker wing & larger wing area push streamlines further apart
+      const thicknessPush = (thicknessPct / 100) * chordPx * 0.52;
+      const signY = dy0 >= 0 ? 1 : -1;
+      const displace = signY * thicknessPush * envelope * (1 - Math.min(1, Math.abs(dy0) / (chordPx * 0.85)));
+
+      // 2. Camber arch deflection: positive camber arches upper & lower streamlines upward over the crown
+      const camberArch = -(camberPct / 100) * chordPx * 0.45 * envelope;
+
+      // 3. Circulation upwash ahead & downwash trailing behind wing (driven by AoA + Camber)
+      const aoaRad = (aoaDeg * Math.PI) / 180;
+      const totalCirculation = (Math.sin(aoaRad) + (camberPct / 100) * 0.55) * chordPx * 0.36;
+      let wash = 0;
+      if (dx < 0) {
+        // Upwash approaching leading edge
+        wash = -totalCirculation * 0.38 * envX * envY;
+      } else {
+        // Trailing downwash wake
+        const wakeDecay = Math.exp(-dx / (chordPx * 1.9));
+        wash = totalCirculation * 0.92 * wakeDecay * Math.exp(-(dy0 * dy0) / (2 * (sigmaY * 1.3) ** 2));
+      }
+
+      // 4. Post-stall flow separation wave oscillation
+      let stallWave = 0;
+      if (telemetry.isStalled && dx > -chordPx * 0.1 && Math.abs(dy0) < chordPx * 0.5) {
+        const wakeFactor = Math.min(1, (dx + chordPx * 0.1) / (chordPx * 0.8));
+        stallWave = Math.sin(dx * 0.042 - flowOffset * 0.08 + y0 * 0.05) * 15 * wakeFactor * envY;
+      }
+
+      return y0 + displace + camberArch + wash + stallWave;
+    }
+
+    function drawWindTunnel(dt) {
+      // Smoothly interpolate visual morph values towards target slider values
+      const lerpRate = Math.min(1, dt * 16);
+      smoothMorph.aoa += (state.aoa - smoothMorph.aoa) * lerpRate;
+      smoothMorph.camber += (state.camber - smoothMorph.camber) * lerpRate;
+      smoothMorph.thickness += (state.thickness - smoothMorph.thickness) * lerpRate;
+      smoothMorph.wingArea += (state.wingArea - smoothMorph.wingArea) * lerpRate;
+
+      const w = tunnelCanvas.width / (window.devicePixelRatio || 1);
+      const h = tunnelCanvas.height / (window.devicePixelRatio || 1);
+
+      tunnelCtx.clearRect(0, 0, w, h);
+
+      // 1. Engineering Coordinate Grid
+      const gridStep = 36;
+      tunnelCtx.strokeStyle = 'rgba(20, 40, 71, 0.45)';
+      tunnelCtx.lineWidth = 1;
+      tunnelCtx.beginPath();
+      for (let x = 0; x < w; x += gridStep) {
+        tunnelCtx.moveTo(x, 0);
+        tunnelCtx.lineTo(x, h);
+      }
+      for (let y = 0; y < h; y += gridStep) {
+        tunnelCtx.moveTo(0, y);
+        tunnelCtx.lineTo(w, y);
+      }
+      tunnelCtx.stroke();
+
+      // Centerline reference axis
+      const cx = w * 0.52;
+      const cy = h * 0.52;
+      const { chordPx, scaleRatio } = getVisualChordPx(w, smoothMorph.wingArea);
+      document.getElementById('hudChordScale').textContent = `${scaleRatio.toFixed(2)}x`;
+
+      tunnelCtx.strokeStyle = 'rgba(0, 243, 255, 0.12)';
+      tunnelCtx.setLineDash([6, 6]);
+      tunnelCtx.beginPath();
+      tunnelCtx.moveTo(0, cy);
+      tunnelCtx.lineTo(w, cy);
+      tunnelCtx.stroke();
+      tunnelCtx.setLineDash([]);
+
+      // Generate live morphed wing polygon
+      const airfoilPoly = getScreenAirfoilPolygon(
+        cx,
+        cy,
+        chordPx,
+        smoothMorph.aoa,
+        smoothMorph.camber,
+        smoothMorph.thickness
+      );
+
+      // 2. Pressure Heatmap Aura (Scales dynamically with morphed chord, camber, AoA & speed)
+      if (state.showHeatmap && telemetry.velocity > 1) {
+        const intensity = Math.min(1, (telemetry.velocity / 72) * (0.38 + Math.abs(telemetry.cl) * 0.48));
+        tunnelCtx.save();
+        tunnelCtx.translate(cx, cy);
+        tunnelCtx.rotate((-smoothMorph.aoa * Math.PI) / 180);
+
+        const camberShiftY = -(smoothMorph.camber / 100) * chordPx * 0.45;
+        const thickShiftY = (smoothMorph.thickness / 100) * chordPx * 0.45;
+
+        // Upper suction low-pressure zone
+        const upperGrad = tunnelCtx.createRadialGradient(0, camberShiftY - thickShiftY, 8, 0, camberShiftY - thickShiftY - 12, chordPx * 0.68);
+        if (telemetry.isStalled) {
+          upperGrad.addColorStop(0, `rgba(255, 42, 85, ${0.38 * intensity})`);
+          upperGrad.addColorStop(0.6, `rgba(255, 170, 0, ${0.16 * intensity})`);
+          upperGrad.addColorStop(1, 'rgba(5, 10, 20, 0)');
+        } else {
+          upperGrad.addColorStop(0, `rgba(0, 243, 255, ${0.34 * intensity})`);
+          upperGrad.addColorStop(0.55, `rgba(0, 136, 255, ${0.15 * intensity})`);
+          upperGrad.addColorStop(1, 'rgba(5, 10, 20, 0)');
+        }
+        tunnelCtx.fillStyle = upperGrad;
+        tunnelCtx.beginPath();
+        tunnelCtx.ellipse(0, camberShiftY - thickShiftY * 0.8, chordPx * 0.66, chordPx * 0.36, 0, Math.PI, 0);
+        tunnelCtx.fill();
+
+        // Lower high-pressure cushion
+        const lowerGrad = tunnelCtx.createRadialGradient(0, camberShiftY + thickShiftY, 6, 0, camberShiftY + thickShiftY + 10, chordPx * 0.6);
+        lowerGrad.addColorStop(0, `rgba(255, 170, 0, ${0.25 * intensity})`);
+        lowerGrad.addColorStop(0.6, `rgba(0, 136, 255, ${0.11 * intensity})`);
+        lowerGrad.addColorStop(1, 'rgba(5, 10, 20, 0)');
+        tunnelCtx.fillStyle = lowerGrad;
+        tunnelCtx.beginPath();
+        tunnelCtx.ellipse(0, camberShiftY + thickShiftY * 0.8, chordPx * 0.6, chordPx * 0.3, 0, 0, Math.PI);
+        tunnelCtx.fill();
+
+        tunnelCtx.restore();
+      }
+
+      // 3. Flowing Streamlines & Directional Blue/Red Arrows
+      if (state.showStreamlines) {
+        const topMargin = 38;
+        const botMargin = 38;
+        const laneSpacing = (h - topMargin - botMargin) / (NUM_LANES - 1);
+
+        if (!state.paused) {
+          flowOffset = (flowOffset + telemetry.velocity * dt * 4.9) % (w / ARROWS_PER_LANE);
+        }
+
+        for (let i = 0; i < NUM_LANES; i++) {
+          const y0 = topMargin + i * laneSpacing;
+
+          // Draw continuous smooth streamline curve
+          tunnelCtx.beginPath();
+          tunnelCtx.strokeStyle = 'rgba(0, 175, 255, 0.22)';
+          tunnelCtx.lineWidth = 1.2;
+
+          const segStep = 12;
+          for (let x = 0; x <= w + segStep; x += segStep) {
+            const sy = getStreamlineY(
+              x, y0, cx, cy, chordPx,
+              smoothMorph.aoa, smoothMorph.camber, smoothMorph.thickness
+            );
+            if (x === 0) tunnelCtx.moveTo(x, sy);
+            else tunnelCtx.lineTo(x, sy);
+          }
+          tunnelCtx.stroke();
+
+          // Draw animated directional wind arrows along streamline
+          if (telemetry.velocity > 0.5) {
+            const spacingX = w / ARROWS_PER_LANE;
+            const laneStagger = (i % 2) * (spacingX * 0.45);
+
+            for (let a = -1; a <= ARROWS_PER_LANE; a++) {
+              const ax = a * spacingX + flowOffset + laneStagger;
+              if (ax < 10 || ax > w - 10) continue;
+
+              const ay = getStreamlineY(
+                ax, y0, cx, cy, chordPx,
+                smoothMorph.aoa, smoothMorph.camber, smoothMorph.thickness
+              );
+              const nextAx = ax + 14;
+              const nextAy = getStreamlineY(
+                nextAx, y0, cx, cy, chordPx,
+                smoothMorph.aoa, smoothMorph.camber, smoothMorph.thickness
+              );
+              const angle = Math.atan2(nextAy - ay, nextAx - ax);
+
+              // Multi-point collision check against the exact morphed airfoil polygon
+              const cosA = Math.cos(angle);
+              const sinA = Math.sin(angle);
+              const tipX = ax + cosA * 11;
+              const tipY = ay + sinA * 11;
+              const tailX = ax - cosA * 8;
+              const tailY = ay - sinA * 8;
+
+              const isBlocked =
+                isPointInsidePolygon(ax, ay, airfoilPoly) ||
+                isPointInsidePolygon(tipX, tipY, airfoilPoly) ||
+                isPointInsidePolygon(tailX, tailY, airfoilPoly);
+
+              tunnelCtx.save();
+              tunnelCtx.translate(ax, ay);
+              tunnelCtx.rotate(angle);
+
+              if (isBlocked) {
+                // GLOWING CRIMSON RED BLOCKED / IMPACTED ARROW
+                tunnelCtx.strokeStyle = '#ff2a55';
+                tunnelCtx.fillStyle = '#ff2a55';
+                tunnelCtx.shadowColor = '#ff2a55';
+                tunnelCtx.shadowBlur = 12;
+
+                // Stagnation impact ring
+                tunnelCtx.beginPath();
+                tunnelCtx.arc(4, 0, 5.5, 0, Math.PI * 2);
+                tunnelCtx.strokeStyle = 'rgba(255, 42, 85, 0.6)';
+                tunnelCtx.stroke();
+                tunnelCtx.strokeStyle = '#ff2a55';
+              } else {
+                // ELECTRIC BLUE / ACCELERATED CYAN LAMINAR WIND ARROW
+                const isUpperSuction = ay < cy && Math.abs(ax - cx) < chordPx * 0.68;
+                const arrowColor = isUpperSuction ? '#00f3ff' : '#1e90ff';
+                tunnelCtx.strokeStyle = arrowColor;
+                tunnelCtx.fillStyle = arrowColor;
+                tunnelCtx.shadowColor = arrowColor;
+                tunnelCtx.shadowBlur = 6;
+              }
+
+              // Arrow shaft + crisp chevron head
+              tunnelCtx.lineWidth = 1.9;
+              tunnelCtx.beginPath();
+              tunnelCtx.moveTo(-9, 0);
+              tunnelCtx.lineTo(7, 0);
+              tunnelCtx.stroke();
+
+              tunnelCtx.beginPath();
+              tunnelCtx.moveTo(10.5, 0);
+              tunnelCtx.lineTo(3, -3.6);
+              tunnelCtx.lineTo(5, 0);
+              tunnelCtx.lineTo(3, 3.6);
+              tunnelCtx.closePath();
+              tunnelCtx.fill();
+
+              tunnelCtx.restore();
+            }
+          }
+        }
+      }
+
+      // 4. Stall Turbulent Vortices behind Trailing Edge
+      if (telemetry.isStalled) {
+        tunnelCtx.save();
+        vortices.forEach(v => {
+          if (!state.paused) {
+            v.x += telemetry.velocity * dt * 2.3;
+            v.angle += v.speed;
+            if (v.x > chordPx * 1.45) {
+              v.x = -chordPx * 0.12;
+              v.y = (Math.random() - 0.5) * (chordPx * 0.35);
+            }
+          }
+          const vx = cx + chordPx * 0.25 + v.x;
+          const vy = cy - 18 + v.y + Math.sin(v.angle) * v.radius;
+
+          tunnelCtx.strokeStyle = 'rgba(255, 42, 85, 0.58)';
+          tunnelCtx.lineWidth = 1.5;
+          tunnelCtx.beginPath();
+          tunnelCtx.arc(vx, vy, v.radius * 0.55, v.angle, v.angle + Math.PI * 1.45);
+          tunnelCtx.stroke();
+        });
+        tunnelCtx.restore();
+      }
+
+      // 5. Render Morphed Airfoil Body & Internal Structural Ribbing
+      if (airfoilPoly.length > 2) {
+        tunnelCtx.save();
+        tunnelCtx.beginPath();
+        tunnelCtx.moveTo(airfoilPoly[0].x, airfoilPoly[0].y);
+        for (let i = 1; i < airfoilPoly.length; i++) {
+          tunnelCtx.lineTo(airfoilPoly[i].x, airfoilPoly[i].y);
+        }
+        tunnelCtx.closePath();
+
+        // Luminous gradient fill
+        const wingGrad = tunnelCtx.createLinearGradient(cx - chordPx * 0.4, cy - 35, cx + chordPx * 0.5, cy + 35);
+        wingGrad.addColorStop(0, '#b8fbff');
+        wingGrad.addColorStop(0.5, '#38e8ff');
+        wingGrad.addColorStop(1, '#0088cc');
+
+        tunnelCtx.fillStyle = wingGrad;
+        tunnelCtx.shadowColor = telemetry.isStalled ? '#ff2a55' : '#00f3ff';
+        tunnelCtx.shadowBlur = 24;
+        tunnelCtx.fill();
+
+        // Crisp outer rim
+        tunnelCtx.lineWidth = 2.2;
+        tunnelCtx.strokeStyle = telemetry.isStalled ? '#ff2a55' : '#ffffff';
+        tunnelCtx.stroke();
+
+        // Subtle chord line inside wing so user clearly sees pitch & camber curvature
+        const rad = (-smoothMorph.aoa * Math.PI) / 180;
+        const leX = cx - 0.38 * chordPx * Math.cos(rad);
+        const leY = cy - 0.38 * chordPx * Math.sin(rad);
+        const teX = cx + 0.62 * chordPx * Math.cos(rad);
+        const teY = cy + 0.62 * chordPx * Math.sin(rad);
+
+        tunnelCtx.shadowBlur = 0;
+        tunnelCtx.strokeStyle = 'rgba(5, 10, 20, 0.45)';
+        tunnelCtx.setLineDash([4, 4]);
+        tunnelCtx.lineWidth = 1.2;
+        tunnelCtx.beginPath();
+        tunnelCtx.moveTo(leX, leY);
+        tunnelCtx.lineTo(teX, teY);
+        tunnelCtx.stroke();
+        tunnelCtx.setLineDash([]);
+
+        tunnelCtx.restore();
+      }
+
+      // 6. Force Vectors (LIFT & DRAG Arrows from Quarter-Chord Center of Pressure)
+      if (state.showVectors && telemetry.velocity > 0.5) {
+        const rad = (-smoothMorph.aoa * Math.PI) / 180;
+        const copX = cx - chordPx * 0.13 * Math.cos(rad);
+        const copY = cy - chordPx * 0.13 * Math.sin(rad);
+
+        // Lift Vector (Amber vertical)
+        const liftLen = Math.max(-135, Math.min(145, telemetry.lift * 0.28));
+        if (Math.abs(liftLen) > 4) {
+          drawHudVector(
+            tunnelCtx,
+            copX,
+            copY,
+            copX,
+            copY - liftLen,
+            '#ffaa00',
+            `LIFT ${telemetry.lift.toFixed(0)}N`
+          );
+        }
+
+        // Drag Vector (Cyan horizontal)
+        const dragLen = Math.min(165, Math.max(14, telemetry.drag * 1.35));
+        drawHudVector(
+          tunnelCtx,
+          copX,
+          copY,
+          copX + dragLen,
+          copY,
+          '#00f3ff',
+          `DRAG ${telemetry.drag.toFixed(1)}N`
+        );
+
+        // Center of pressure pivot dot
+        tunnelCtx.fillStyle = '#ffffff';
+        tunnelCtx.beginPath();
+        tunnelCtx.arc(copX, copY, 3.5, 0, Math.PI * 2);
+        tunnelCtx.fill();
+      }
+    }
+
+    function drawHudVector(ctx, x1, y1, x2, y2, color, label) {
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 10;
+      ctx.lineWidth = 2.6;
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const head = 9;
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - head * Math.cos(angle - Math.PI / 6), y2 - head * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(x2 - head * Math.cos(angle + Math.PI / 6), y2 - head * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.font = 'bold 11px "JetBrains Mono", monospace';
+      if (label === 'LIFT') {
+        ctx.fillText(label, x2 + 8, y2 + (y2 < y1 ? 8 : -4));
+      } else {
+        ctx.fillText(label, x2 + 8, y2 + 4);
+      }
+      ctx.restore();
+    }
+
+    // --- FREEFORM WING SKETCHPAD INTERACTION ---
+    let isDrawingSketch = false;
+    let rawSketchPoints = [];
+
+    function drawSketchpad() {
+      const w = sketchCanvas.width / (window.devicePixelRatio || 1);
+      const h = sketchCanvas.height / (window.devicePixelRatio || 1);
+      sketchCtx.clearRect(0, 0, w, h);
+
+      // Subtle grid
+      sketchCtx.strokeStyle = 'rgba(20, 40, 71, 0.55)';
+      sketchCtx.lineWidth = 1;
+      for (let x = 0; x < w; x += 20) {
+        sketchCtx.beginPath();
+        sketchCtx.moveTo(x, 0);
+        sketchCtx.lineTo(x, h);
+        sketchCtx.stroke();
+      }
+      for (let y = 0; y < h; y += 20) {
+        sketchCtx.beginPath();
+        sketchCtx.moveTo(0, y);
+        sketchCtx.lineTo(w, y);
+        sketchCtx.stroke();
+      }
+
+      // Center crosshair
+      sketchCtx.strokeStyle = 'rgba(0, 243, 255, 0.25)';
+      sketchCtx.setLineDash([3, 3]);
+      sketchCtx.beginPath();
+      sketchCtx.moveTo(0, h / 2);
+      sketchCtx.lineTo(w, h / 2);
+      sketchCtx.moveTo(w / 2, 0);
+      sketchCtx.lineTo(w / 2, h);
+      sketchCtx.stroke();
+      sketchCtx.setLineDash([]);
+
+      // Draw user stroke
+      if (rawSketchPoints.length > 1) {
+        sketchCtx.save();
+        sketchCtx.strokeStyle = '#00f3ff';
+        sketchCtx.fillStyle = 'rgba(0, 243, 255, 0.18)';
+        sketchCtx.shadowColor = '#00f3ff';
+        sketchCtx.shadowBlur = 8;
+        sketchCtx.lineWidth = 2.2;
+
+        sketchCtx.beginPath();
+        sketchCtx.moveTo(rawSketchPoints[0].x, rawSketchPoints[0].y);
+        for (let i = 1; i < rawSketchPoints.length; i++) {
+          sketchCtx.lineTo(rawSketchPoints[i].x, rawSketchPoints[i].y);
+        }
+        if (!isDrawingSketch) {
+          sketchCtx.closePath();
+          sketchCtx.fill();
+        }
+        sketchCtx.stroke();
+        sketchCtx.restore();
+      }
+    }
+
+    function getPointerPos(canvas, evt) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = evt.touches ? evt.touches[0].clientX : evt.clientX;
+      const clientY = evt.touches ? evt.touches[0].clientY : evt.clientY;
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+      };
+    }
+
+    function startSketch(e) {
+      e.preventDefault();
+      isDrawingSketch = true;
+      rawSketchPoints = [getPointerPos(sketchCanvas, e)];
+      document.getElementById('sketchHint').classList.add('hidden');
+      drawSketchpad();
+    }
+
+    function moveSketch(e) {
+      if (!isDrawingSketch) return;
+      e.preventDefault();
+      const pt = getPointerPos(sketchCanvas, e);
+      const last = rawSketchPoints[rawSketchPoints.length - 1];
+      if (Math.hypot(pt.x - last.x, pt.y - last.y) > 3) {
+        rawSketchPoints.push(pt);
+        drawSketchpad();
+      }
+    }
+
+    function endSketch() {
+      if (!isDrawingSketch) return;
+      isDrawingSketch = false;
+      drawSketchpad();
+
+      if (rawSketchPoints.length >= 4) {
+        applyCustomSketchToTunnel(rawSketchPoints);
+      }
+    }
+
+    function applyCustomSketchToTunnel(pts) {
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      pts.forEach(p => {
+        if (p.x < minX) minX = p.x;
+        if (p.x > maxX) maxX = p.x;
+        if (p.y < minY) minY = p.y;
+        if (p.y > maxY) maxY = p.y;
+      });
+
+      const spanX = Math.max(20, maxX - minX);
+      const spanY = Math.max(10, maxY - minY);
+      const scale = 1.0 / Math.max(spanX, spanY * 1.4);
+      const midX = (minX + maxX) / 2;
+      const midY = (minY + maxY) / 2;
+
+      state.customPolygonNorm = pts.map(p => ({
+        x: (p.x - midX) * scale,
+        y: (p.y - midY) * scale
+      }));
+
+      state.preset = 'custom';
+      updatePresetButtonStyles();
+      document.getElementById('customBadge').classList.remove('hidden');
+      updateTelemetry();
+      showToast('Custom wing profile applied to live wind tunnel');
+    }
+
+    function clearSketchpad() {
+      rawSketchPoints = [];
+      state.customPolygonNorm = null;
+      document.getElementById('sketchHint').classList.remove('hidden');
+      document.getElementById('customBadge').classList.add('hidden');
+      drawSketchpad();
+      selectPreset('cambered');
+    }
+
+    sketchCanvas.addEventListener('mousedown', startSketch);
+    sketchCanvas.addEventListener('mousemove', moveSketch);
+    window.addEventListener('mouseup', endSketch);
+    sketchCanvas.addEventListener('touchstart', startSketch, { passive: false });
+    sketchCanvas.addEventListener('touchmove', moveSketch, { passive: false });
+    window.addEventListener('touchend', endSketch);
+
+    // --- LIFT / ANGLE HISTORY CHART ---
+    function drawHistoryChart() {
+      const w = historyCanvas.width / (window.devicePixelRatio || 1);
+      const h = historyCanvas.height / (window.devicePixelRatio || 1);
+      historyCtx.clearRect(0, 0, w, h);
+
+      const padL = 28, padR = 16, padT = 12, padB = 22;
+      const plotW = w - padL - padR;
+      const plotH = h - padT - padB;
+
+      // Grid lines
+      historyCtx.strokeStyle = 'rgba(20, 40, 71, 0.6)';
+      historyCtx.lineWidth = 1;
+      for (let i = 0; i <= 4; i++) {
+        const y = padT + (plotH / 4) * i;
+        historyCtx.beginPath();
+        historyCtx.moveTo(padL, y);
+        historyCtx.lineTo(w - padR, y);
+        historyCtx.stroke();
+      }
+
+      const angles = [-10, 0, 10, 20, 30];
+      historyCtx.fillStyle = '#64748b';
+      historyCtx.font = '10px "JetBrains Mono", monospace';
+      historyCtx.textAlign = 'center';
+
+      angles.forEach(deg => {
+        const x = padL + ((deg + 10) / 40) * plotW;
+        historyCtx.beginPath();
+        historyCtx.moveTo(x, padT);
+        historyCtx.lineTo(x, padT + plotH);
+        historyCtx.stroke();
+        historyCtx.fillText(`${deg}°`, x, h - 6);
+      });
+
+      // Zero Cl baseline
+      const minCl = -0.8;
+      const maxCl = 2.4;
+      const mapY = (clVal) => {
+        const clamped = Math.max(minCl, Math.min(maxCl, clVal));
+        return padT + plotH - ((clamped - minCl) / (maxCl - minCl)) * plotH;
+      };
+
+      const zeroY = mapY(0);
+      historyCtx.strokeStyle = 'rgba(100, 116, 139, 0.35)';
+      historyCtx.beginPath();
+      historyCtx.moveTo(padL, zeroY);
+      historyCtx.lineTo(w - padR, zeroY);
+      historyCtx.stroke();
+
+      // Plot Cl vs AoA Curve across -10° to +30°
+      historyCtx.save();
+      historyCtx.beginPath();
+      for (let deg = -10; deg <= 30; deg += 0.5) {
+        const { cl } = computeAerodynamicsForAoA(deg);
+        const x = padL + ((deg + 10) / 40) * plotW;
+        const y = mapY(cl);
+        if (deg === -10) historyCtx.moveTo(x, y);
+        else historyCtx.lineTo(x, y);
+      }
+      historyCtx.strokeStyle = '#00f3ff';
+      historyCtx.shadowColor = '#00f3ff';
+      historyCtx.shadowBlur = 8;
+      historyCtx.lineWidth = 2.2;
+      historyCtx.stroke();
+      historyCtx.restore();
+
+      // Live Glowing Amber Dot for Current AoA & Cl
+      const curX = padL + ((state.aoa + 10) / 40) * plotW;
+      const curY = mapY(telemetry.cl);
+
+      historyCtx.save();
+      historyCtx.fillStyle = 'rgba(255, 170, 0, 0.25)';
+      historyCtx.beginPath();
+      historyCtx.arc(curX, curY, 9, 0, Math.PI * 2);
+      historyCtx.fill();
+
+      historyCtx.fillStyle = '#ffaa00';
+      historyCtx.shadowColor = '#ffaa00';
+      historyCtx.shadowBlur = 10;
+      historyCtx.beginPath();
+      historyCtx.arc(curX, curY, 4.5, 0, Math.PI * 2);
+      historyCtx.fill();
+      historyCtx.restore();
+    }
+
+    // --- UI CONTROLS & EVENT BINDINGS ---
+    function setMode(newMode) {
+      state.mode = newMode;
+      const btnSim = document.getElementById('btnModeSim');
+      const btnMan = document.getElementById('btnModeMan');
+      const manualBox = document.getElementById('manualOverrideBox');
+
+      if (newMode === 'SIMULATED') {
+        btnSim.className = 'py-1 text-[11px] font-semibold tracking-wider rounded transition-all bg-cyanGlow/15 text-cyanGlow border border-cyanGlow/50 shadow-[0_0_10px_rgba(0,243,255,0.15)]';
+        btnMan.className = 'py-1 text-[11px] font-semibold tracking-wider rounded transition-all text-slate-400 hover:text-white border border-transparent';
+        manualBox.classList.add('hidden');
+      } else {
+        btnMan.className = 'py-1 text-[11px] font-semibold tracking-wider rounded transition-all bg-amberGlow/15 text-amberGlow border border-amberGlow/50 shadow-[0_0_10px_rgba(255,170,0,0.15)]';
+        btnSim.className = 'py-1 text-[11px] font-semibold tracking-wider rounded transition-all text-slate-400 hover:text-white border border-transparent';
+        manualBox.classList.remove('hidden');
+      }
+      updateTelemetry();
+    }
+
+    function updatePresetButtonStyles() {
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.className = 'preset-btn text-left px-2.5 py-1.5 rounded border border-borderSci bg-panel hover:border-cyanGlow/50 text-[11px] text-slate-300 transition-all';
+      });
+      const activeBtn = document.getElementById(`preset-${state.preset}`);
+      if (activeBtn) {
+        activeBtn.className = 'preset-btn text-left px-2.5 py-1.5 rounded border border-cyanGlow bg-cyanGlow/10 text-[11px] text-cyanGlow font-medium transition-all shadow-[0_0_12px_rgba(0,243,255,0.12)]';
+      }
+    }
+
+    function selectPreset(presetName) {
+      state.preset = presetName;
+      document.getElementById('customBadge').classList.add('hidden');
+
+      if (presetName === 'symmetrical') {
+        state.camber = 0;
+        state.thickness = 12;
+      } else if (presetName === 'cambered') {
+        state.camber = 5;
+        state.thickness = 12;
+      } else if (presetName === 'supercritical') {
+        state.camber = 4;
+        state.thickness = 14;
+      } else if (presetName === 'wedge') {
+        state.camber = 0;
+        state.thickness = 10;
+      }
+
+      document.getElementById('sliderCamber').value = state.camber;
+      document.getElementById('sliderThickness').value = state.thickness;
+      updatePresetButtonStyles();
+      updateTelemetry();
+    }
+
+    function togglePause() {
+      state.paused = !state.paused;
+      document.getElementById('pauseIcon').textContent = state.paused ? '▶' : '❚❚';
+      document.getElementById('pauseText').textContent = state.paused ? 'RESUME SIMULATION' : 'PAUSE SIMULATION';
+    }
+
+    // Bind sliders & inputs
+    document.getElementById('sliderAoA').addEventListener('input', e => {
+      state.aoa = parseFloat(e.target.value);
+      updateTelemetry();
+    });
+
+    document.getElementById('sliderFan').addEventListener('input', e => {
+      state.fanSpeed = parseFloat(e.target.value);
+      updateTelemetry();
+    });
+
+    document.getElementById('sliderCamber').addEventListener('input', e => {
+      state.camber = parseFloat(e.target.value);
+      // Automatically switch from Symmetrical to Cambered NACA morphing when camber is adjusted
+      if (state.preset === 'symmetrical') {
+        state.preset = 'cambered';
+        updatePresetButtonStyles();
+      }
+      updateTelemetry();
+    });
+
+    document.getElementById('sliderThickness').addEventListener('input', e => {
+      state.thickness = parseFloat(e.target.value);
+      updateTelemetry();
+    });
+
+    document.getElementById('sliderArea').addEventListener('input', e => {
+      const val = parseFloat(e.target.value);
+      state.wingArea = val;
+      document.getElementById('inputArea').value = val.toFixed(2);
+      updateTelemetry();
+    });
+
+    document.getElementById('inputArea').addEventListener('input', e => {
+      const val = parseFloat(e.target.value);
+      if (!isNaN(val) && val >= 0.05 && val <= 0.60) {
+        state.wingArea = val;
+        document.getElementById('sliderArea').value = val;
+        updateTelemetry();
+      }
+    });
+
+    document.getElementById('inputDensity').addEventListener('input', e => {
+      const val = parseFloat(e.target.value);
+      if (!isNaN(val) && val > 0) {
+        state.airDensity = val;
+        updateTelemetry();
+      }
+    });
+
+    document.getElementById('inputArea').addEventListener('input', e => {
+      const val = parseFloat(e.target.value);
+      if (!isNaN(val) && val > 0) {
+        state.wingArea = val;
+        updateTelemetry();
+      }
+    });
+
+    document.getElementById('inputManualCl').addEventListener('input', e => {
+      const val = parseFloat(e.target.value);
+      if (!isNaN(val)) {
+        state.manualCl = val;
+        updateTelemetry();
+      }
+    });
+
+    document.getElementById('inputManualCd').addEventListener('input', e => {
+      const val = parseFloat(e.target.value);
+      if (!isNaN(val) && val >= 0) {
+        state.manualCd = val;
+        updateTelemetry();
+      }
+    });
+
+    document.getElementById('chkStreamlines').addEventListener('change', e => {
+      state.showStreamlines = e.target.checked;
+    });
+    document.getElementById('chkHeatmap').addEventListener('change', e => {
+      state.showHeatmap = e.target.checked;
+    });
+    document.getElementById('chkVectors').addEventListener('change', e => {
+      state.showVectors = e.target.checked;
+    });
+
+    // --- EXPERIMENT LOG & CSV EXPORT ---
+    function renderSavedRuns() {
+      const listEl = document.getElementById('runsList');
+      const countEl = document.getElementById('runCountLabel');
+      countEl.textContent = `${String(state.savedRuns.length).padStart(2, '0')} RUNS`;
+
+      listEl.innerHTML = state.savedRuns.map(run => `
+        <div class="flex items-center justify-between px-3 py-2 rounded bg-space/90 border border-borderSci/80 text-xs">
+          <div>
+            <div class="font-semibold text-white tracking-wide">${escapeHtml(run.name)}</div>
+            <div class="text-[10px] text-slate-400">
+              ${escapeHtml(run.profile)} · ${run.aoa.toFixed(1)}° AOA · ${run.velocity.toFixed(1)} m/s
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="font-bold text-amberGlow">${run.lift.toFixed(1)} N</div>
+            <div class="text-[9px] text-slate-500">L/D ${run.ld.toFixed(1)}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function saveExperimentRun() {
+      const nameInput = document.getElementById('runNameInput');
+      const label = nameInput.value.trim() || `RUN_${state.savedRuns.length + 1}`;
+
+      const profileNames = {
+        symmetrical: 'Symmetrical',
+        cambered: 'High-Lift Cambered',
+        wedge: 'Supersonic Wedge',
+        custom: 'Custom Sketch'
+      };
+
+      state.savedRuns.unshift({
+        name: label,
+        profile: profileNames[state.preset] || 'Airfoil',
+        aoa: state.aoa,
+        velocity: telemetry.velocity,
+        lift: telemetry.lift,
+        drag: telemetry.drag,
+        ld: telemetry.ld
+      });
+
+      renderSavedRuns();
+      showToast(`Saved "${label}" (${telemetry.lift.toFixed(1)} N Lift)`);
+    }
+
+    function exportCSV() {
+      const headers = ['Run Name', 'Airfoil Profile', 'AoA (deg)', 'Velocity (m/s)', 'Lift (N)', 'Drag (N)', 'L/D Ratio'];
+      const rows = state.savedRuns.map(r => [
+        `"${r.name.replace(/"/g, '""')}"`,
+        `"${r.profile}"`,
+        r.aoa.toFixed(1),
+        r.velocity.toFixed(1),
+        r.lift.toFixed(2),
+        r.drag.toFixed(2),
+        r.ld.toFixed(2)
+      ]);
+
+      const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'aerolab_wind_tunnel_data.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      showToast('Exported telemetry log to CSV');
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const el = document.getElementById('toastMsg');
+      el.textContent = msg;
+      el.classList.remove('opacity-0', 'translate-y-2');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        el.classList.add('opacity-0', 'translate-y-2');
+      }, 2400);
+    }
+
+    // --- MAIN ANIMATION LOOP ---
+    let lastTime = performance.now();
+    let frameCount = 0;
+    let fpsAccum = 0;
+
+    function animate(now) {
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+
+      // FPS Counter
+      frameCount++;
+      fpsAccum += dt;
+      if (fpsAccum >= 0.5) {
+        const fps = Math.round(frameCount / fpsAccum);
+        document.getElementById('fpsCounter').textContent = Math.min(60, fps);
+        frameCount = 0;
+        fpsAccum = 0;
+      }
+
+      drawWindTunnel(dt);
+      requestAnimationFrame(animate);
+    }
+
+    // Initialize on Window Load
+    window.onload = function () {
+      resizeCanvases();
+      renderSavedRuns();
+      updateTelemetry();
+      requestAnimationFrame(animate);
+    };
+  </script>
+</body>
+</html>
